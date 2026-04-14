@@ -4,10 +4,26 @@
 namespace App\ApiResource;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use App\State\Processor\GenericDtoProcessor;
+use App\State\Provider\GenericDtoProvider;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
     shortName: 'Book',
+    operations: [
+        new GetCollection(provider: GenericDtoProvider::class),
+        new Get(provider: GenericDtoProvider::class),
+        new Post(processor: GenericDtoProcessor::class),
+        new Put(provider: GenericDtoProvider::class, processor: GenericDtoProcessor::class),
+        new Patch(provider: GenericDtoProvider::class, processor: GenericDtoProcessor::class),
+        new Delete(provider: GenericDtoProvider::class, processor: GenericDtoProcessor::class),
+    ],
     paginationEnabled: true,
     paginationItemsPerPage: 10,
     paginationClientItemsPerPage: true,
