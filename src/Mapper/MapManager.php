@@ -12,17 +12,19 @@ class MapManager
         #[AutowireIterator(EntityMapperInterface::TAG)]
         iterable $mappers,
     ) {
-        $this->mappers = iterator_to_array($mappers);
+        $this->mappers = array_reduce(
+            iterator_to_array($mappers, false),
+            fn(array $carry, EntityMapperInterface $map) => $carry + [$map->getSupportedResourceClass() => $map],
+            []
+        );
     }
 
     public function getMapper(string $resourceClassName)
     {
-        foreach($this->mappers as $mapper) {
-            if($mapper->getSupportedResourceClass() === $resourceClassName) {
-                return $mapper;
-            }
+        if(!isset($this->mappers[$resourceClassName])) {
+            throw new \RuntimeException("No mapper found for: {$resourceClassName}");
         }
 
-        throw new \RuntimeException("No mapper found for: {$resourceClassName}");
+        return $this->mappers[$resourceClassName];
     }
 }
