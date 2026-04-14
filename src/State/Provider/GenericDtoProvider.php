@@ -8,6 +8,7 @@ use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\State\ProviderInterface;
 use App\Mapper\MapManager;
 use App\State\Pagination\MappedPaginator;
+use App\Repository\DefaultOrderRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 
@@ -32,6 +33,12 @@ final class GenericDtoProvider implements ProviderInterface
             $qb = $repository->createQueryBuilder('e')
                 ->setFirstResult($offset)
                 ->setMaxResults($itemsPerPage);
+
+            if ($repository instanceof DefaultOrderRepositoryInterface) {
+                foreach ($repository->getDefaultOrder() as $field => $direction) {
+                    $qb->addOrderBy("e.{$field}", $direction);
+                }
+            }
 
             return new MappedPaginator(
                 new DoctrinePaginator($qb),
