@@ -13,8 +13,13 @@ use Doctrine\Persistence\ManagerRegistry;
  *
  * @extends ServiceEntityRepository<Book>
  */
-class BookRepository extends ServiceEntityRepository
+class BookRepository extends ServiceEntityRepository implements DefaultOrderRepositoryInterface
 {
+    public function getDefaultOrder(): array
+    {
+        return ['id' => 'ASC'];
+    }
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Book::class);
