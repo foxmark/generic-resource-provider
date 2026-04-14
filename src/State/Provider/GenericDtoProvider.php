@@ -2,21 +2,47 @@
 
 namespace App\State\Provider;
 
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\State\ProviderInterface;
 use App\Mapper\MapManager;
-use stdClass;
+use App\State\Pagination\MappedPaginator;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 
 final class GenericDtoProvider implements ProviderInterface
 {
-    private $mapManager;
-
-    public function __construct(MapManager $mapManager) {
-        $this->mapManager = $mapManager;
-    }
+    public function __construct(
+        private readonly MapManager $mapManager,
+        private readonly EntityManagerInterface $em,
+        private readonly Pagination $pagination,
+    ) {}
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|null
     {
-        return new stdClass();
+        $mapper = $this->mapManager->getMapper($operation->getClass());
+        $repository = $this->em->getRepository($mapper->getSupportedEntityClass());
+
+        if ($operation instanceof GetCollection) {
+            $page         = $this->pagination->getPage($context);
+            $itemsPerPage = $this->pagination->getLimit($operation, $context);
+            $offset       = $this->pagination->getOffset($operation, $context);
+
+            $qb = $repository->createQueryBuilder('e')
+                ->setFirstResult($offset)
+                ->setMaxResults($itemsPerPage);
+
+            return new MappedPaginator(
+                new DoctrinePaginator($qb),
+                $mapper,
+                (int) $page,
+                (int) $itemsPerPage,
+            );
+        }
+
+        $entity = $repository->find($uriVariables['id']);
+
+        return $entity !== null ? $mapper->toResource($entity) : null;
     }
 }
