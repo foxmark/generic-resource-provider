@@ -14,4 +14,10 @@ interface EntityMapperInterface
     public function getSupportedEntityClass(): string;
 
     public function toResource(object $entity): object;
+
+    /**
+     * Map a DTO onto an entity. Pass an existing entity for updates,
+     * omit (or pass null) for creates.
+     */
+    public function toEntity(object $resource, ?object $entity = null): object;
 }
