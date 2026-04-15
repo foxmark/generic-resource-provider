@@ -5,11 +5,13 @@ namespace App\Entity;
 use App\Repository\BookRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use App\EventListener\Doctrine\Interface\NotifiableInsertInterface;
+use App\EventListener\Doctrine\Interface\NotifiableUpdatedInterface;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 #[ORM\Table(name: 'book')]
 #[ORM\HasLifecycleCallbacks]
-class Book
+class Book implements NotifiableInsertInterface, NotifiableUpdatedInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
