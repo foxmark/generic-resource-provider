@@ -3,8 +3,10 @@
 namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Exception\ItemNotFoundException;
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Put;
 use ApiPlatform\State\ProcessorInterface;
 use App\Mapper\MapManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,9 +33,13 @@ final class GenericDtoProcessor implements ProcessorInterface
             return null;
         }
 
-        $existing = ($operation instanceof Post)
-            ? null
-            : $repository->find($uriVariables['id']);
+        $existing = null;
+
+        if ($operation instanceof Put || $operation instanceof Patch) {
+            if (!$existing = $repository->find($uriVariables['id'])) {
+                throw new ItemNotFoundException();
+            }
+        }
 
         $entity = $mapper->toEntity($data, $existing);
 
