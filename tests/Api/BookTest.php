@@ -39,13 +39,15 @@ class BookTest extends ApiTestCase
             ->get('doctrine')
             ->getManager();
 
-        // Start a transaction; rolled back in tearDown to isolate each test.
-        $this->em->beginTransaction();
+        // Truncate the book table so each test starts from a clean slate.
+        // Transaction rollback cannot be used here because ApiTestCase::createClient()
+        // reboots the kernel (and thus opens a new DB connection), so the HTTP layer
+        // never sees the outer transaction started in setUp.
+        $this->em->getConnection()->executeStatement('DELETE FROM book');
     }
 
     protected function tearDown(): void
     {
-        $this->em->rollback();
         parent::tearDown();
     }
 
@@ -98,10 +100,10 @@ class BookTest extends ApiTestCase
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
         $this->assertJsonContains([
-            '@context'         => '/api/contexts/Book',
-            '@type'            => 'hydra:Collection',
-            'hydra:member'     => [],
-            'hydra:totalItems' => 0,
+            '@context'   => '/api/contexts/Book',
+            '@type'      => 'Collection',
+            'member'     => [],
+            'totalItems' => 0,
         ]);
     }
 
@@ -115,11 +117,11 @@ class BookTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains([
-            'hydra:totalItems' => 2,
+            'totalItems' => 2,
         ]);
 
         $data = $client->getResponse()->toArray();
-        $this->assertCount(2, $data['hydra:member']);
+        $this->assertCount(2, $data['member']);
     }
 
     public function testGetBookCollectionDefaultsTo10ItemsPerPage(): void
@@ -139,8 +141,8 @@ class BookTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $data = $client->getResponse()->toArray();
-        $this->assertCount(10, $data['hydra:member']);
-        $this->assertSame(12, $data['hydra:totalItems']);
+        $this->assertCount(10, $data['member']);
+        $this->assertSame(12, $data['totalItems']);
     }
 
     public function testGetBookCollectionClientCanRequestDifferentPageSize(): void
@@ -158,7 +160,7 @@ class BookTest extends ApiTestCase
 
         $this->assertResponseIsSuccessful();
         $data = $client->getResponse()->toArray();
-        $this->assertCount(3, $data['hydra:member']);
+        $this->assertCount(3, $data['member']);
     }
 
     // -------------------------------------------------------------------------
@@ -266,8 +268,10 @@ class BookTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(422);
         $this->assertJsonContains([
-            '@type'            => 'ConstraintViolationList',
-            'hydra:description' => 'title: This value should not be blank.',
+            '@type'      => 'ConstraintViolation',
+            'violations' => [
+                ['propertyPath' => 'title', 'message' => 'This value should not be blank.'],
+            ],
         ]);
     }
 
@@ -284,7 +288,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithTitleTooLongReturns422(): void
@@ -300,7 +304,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithBlankIsbnReturns422(): void
@@ -316,7 +320,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithInvalidIsbnReturns422(): void
@@ -332,7 +336,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithBlankAuthorNameReturns422(): void
@@ -348,7 +352,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithPublicationYearBelowRangeReturns422(): void
@@ -365,7 +369,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testCreateBookWithPublicationYearAboveRangeReturns422(): void
@@ -382,7 +386,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     public function testIsbnUniqueConstraintReturns422(): void
@@ -401,7 +405,7 @@ class BookTest extends ApiTestCase
         ]);
 
         $this->assertResponseStatusCodeSame(422);
-        $this->assertJsonContains(['@type' => 'ConstraintViolationList']);
+        $this->assertJsonContains(['@type' => 'ConstraintViolation']);
     }
 
     // -------------------------------------------------------------------------

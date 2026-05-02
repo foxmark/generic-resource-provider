@@ -8,14 +8,17 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\State\ProcessorInterface;
+use ApiPlatform\Validator\Exception\ValidationException;
 use App\Mapper\MapManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class GenericDtoProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly MapManager $mapManager,
         private readonly EntityManagerInterface $em,
+        private readonly ValidatorInterface $validator,
     ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ?object
@@ -42,6 +45,11 @@ final class GenericDtoProcessor implements ProcessorInterface
         }
 
         $entity = $mapper->toEntity($data, $existing);
+
+        $violations = $this->validator->validate($entity);
+        if (count($violations) > 0) {
+            throw new ValidationException($violations);
+        }
 
         $this->em->persist($entity);
         $this->em->flush();

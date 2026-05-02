@@ -49,13 +49,15 @@ class BookRepositoryTest extends KernelTestCase
 
         $this->repository = $this->em->getRepository(Book::class);
 
-        // Wrap each test in a transaction; rolled back in tearDown for isolation.
-        $this->em->beginTransaction();
+        // Truncate the book table so each test starts from a clean slate.
+        // This handles both within-run isolation and leftover rows from prior
+        // incomplete runs (where rollback was never reached).
+        $this->em->getConnection()->executeStatement('DELETE FROM book');
+        $this->em->clear();
     }
 
     protected function tearDown(): void
     {
-        $this->em->rollback();
         parent::tearDown();
     }
 
