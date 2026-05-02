@@ -7,10 +7,12 @@ use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use App\EventListener\Doctrine\Interface\NotifiableInsertInterface;
 use App\EventListener\Doctrine\Interface\NotifiableUpdatedInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 #[ORM\Table(name: 'book')]
 #[ORM\HasLifecycleCallbacks]
+#[UniqueEntity(fields: ['isbn'])]
 class Book implements NotifiableInsertInterface, NotifiableUpdatedInterface
 {
     #[ORM\Id]
