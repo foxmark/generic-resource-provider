@@ -39,6 +39,13 @@
         </deprecationTrigger>
     </source>
 
+    <coverage>
+        <report>
+            <html outputDirectory="var/coverage" lowUpperBound="50" highLowerBound="90"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false" showOnlySummary="true"/>
+        </report>
+    </coverage>
+
     <extensions>
     </extensions>
 </phpunit>
