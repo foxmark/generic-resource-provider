@@ -17,8 +17,10 @@ class BookEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            BookChangeEvent::CREATED => 'onBookCreated',
-            BookChangeEvent::UPDATED => 'onBookUpdated',
+            'Book.post.create' => 'onBookCreated',
+            'Book.post.update' => 'onBookUpdated',
+            'Book.pre.create' => 'beforeBookCreate',
+            'Book.pre.update' => 'beforeBookUpdate',
         ];
     }
 
@@ -37,6 +39,28 @@ class BookEventSubscriber implements EventSubscriberInterface
     {
         $book = $event->getBook();
         $this->logger->info('Book updated', [
+            'entity_class' => $book::class,
+            'entity_id'    => $book->getId(),
+            'isbn'         => $book->getIsbn(),
+            'title'        => $book->getTitle(),
+        ]);
+    }
+
+    public function beforeBookCreate(BookChangeEvent $event): void
+    {
+        $book = $event->getBook();
+        $this->logger->info('before book created', [
+            'entity_class' => $book::class,
+            'entity_id'    => $book->getId(),
+            'isbn'         => $book->getIsbn(),
+            'title'        => $book->getTitle(),
+        ]);
+    }
+
+    public function beforeBookUpdate(BookChangeEvent $event): void
+    {
+        $book = $event->getBook();
+        $this->logger->info('before book updates', [
             'entity_class' => $book::class,
             'entity_id'    => $book->getId(),
             'isbn'         => $book->getIsbn(),
