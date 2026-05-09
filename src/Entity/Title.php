@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\EventListener\Doctrine\Interface\NotifiableInsertInterface;
 use App\Repository\TitleRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
@@ -9,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: TitleRepository::class)]
 #[ORM\Table(name: 'title')]
 #[ORM\HasLifecycleCallbacks]
-class Title
+class Title implements NotifiableInsertInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
