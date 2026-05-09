@@ -184,4 +184,30 @@ class BookApiTest extends ApiTestCase
 
         $this->assertResponseStatusCodeSame(422);
     }
+
+    public function testPutNonExistentBookReturns404(): void
+    {
+        $this->client->request('PUT', '/api/books/99999', [
+            'headers' => ['Content-Type' => 'application/ld+json'],
+            'json' => [
+                'title' => 'Ghost Title',
+                'isbn' => '9780743273565',
+                'authorName' => 'Ghost Author',
+                'publicationYear' => 2000,
+                'available' => true,
+            ],
+        ]);
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testPatchNonExistentBookReturns404(): void
+    {
+        $this->client->request('PATCH', '/api/books/99999', [
+            'headers' => ['Content-Type' => 'application/merge-patch+json'],
+            'json' => ['title' => 'Ghost Patch'],
+        ]);
+
+        $this->assertResponseStatusCodeSame(404);
+    }
 }
